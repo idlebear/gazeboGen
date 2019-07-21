@@ -1,16 +1,58 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(gazebo_gen)
+project(gazeboGenerator)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11 )
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
+# find_package(catkin REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+
+
+# step 0
+find_path(gazeboGen_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdParty/octomap_to_gazebo_world/c++/CMakeLists.txt)
+message( ${CMAKE_CURRENT_SOURCE_DIR} )
+message( ${CMAKE_CURRENT_SOURCE_DIR}/thirdParty/octomap_to_gazebo_world/c++ )
+message( ${gazeboGen_INCLUDE_DIR} )
+
+if( (NOT gazeboGen_INCLUDE_DIR) OR (NOT EXISTS ${gazeboGen_INCLUDE_DIR}))
+        # we couldn't find the header files for FOO or they don't exist
+        message("Unable to find octomap_to_gazebo_world submodule")
+
+        # we have a submodule setup for foo, assume it is under external/foo
+        # now we need to clone this submodule
+        execute_process(COMMAND git submodule update --init -- thirdParty/octomap_to_gazebo_world
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+        # set FOO_INCLUDE_DIR properly
+        set(gazeboGen_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdParty/octomap_to_gazebo_world/c++
+            CACHE PATH "gazeboGen include directory")
+        message( ${CMAKE_CURRENT_SOURCE_DIR}/thirdParty/octomap_to_gazebo_world/c++ )
+        message( ${gazeboGen_INCLUDE_DIR} )
+
+        # also install it
+        install(DIRECTORY ${gazeboGen_INCLUDE_DIR}/gazeboGen DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/thirdParty/lib )
+
+        # for convenience setup a target
+        add_library(gazeboGen INTERFACE)
+        target_include_directories(gazeboGen INTERFACE
+            $<BUILD_INTERFACE:${gazeboGen_INCLUDE_DIR}>
+            $<INSTALL_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdParty/lib>
+        )
+
+        # need to export target as well
+        install(TARGETS gazeboGen EXPORT my_export_set DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/thirdParty/lib)
+else()
+        # see above, setup target as well
+        add_library(gazeboGen INTERFACE)
+        target_include_directories(gazeboGen INTERFACE ${gazeboGen_INCLUDE_DIR})
+        target_link_libraries(gazeboGen INTERFACE ${gazeboGen_LIBRARY})
+endif()
+
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -98,12 +140,12 @@ find_package(catkin REQUIRED)
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
+#catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES gazebo_gen
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
-)
+#)
 
 ###########
 ## Build ##

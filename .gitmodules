@@ -1,0 +1,3 @@
+[submodule "thirdParty/octomap_to_gazebo_world"]
+	path = thirdParty/octomap_to_gazebo_world
+	url = git@github.com:idlebear/octomap_to_gazebo_world
