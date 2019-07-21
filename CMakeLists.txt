@@ -7,17 +7,16 @@ add_compile_options(-std=c++11 )
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-# find_package(catkin REQUIRED)
+find_package(catkin REQUIRED COMPONENTS roscpp )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
+message( "BUILDING MAIN" )
 
 # step 0
-find_path(gazeboGen_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdParty/octomap_to_gazebo_world/c++/CMakeLists.txt)
-message( ${CMAKE_CURRENT_SOURCE_DIR} )
-message( ${CMAKE_CURRENT_SOURCE_DIR}/thirdParty/octomap_to_gazebo_world/c++ )
-message( ${gazeboGen_INCLUDE_DIR} )
+find_path(gazeboGen_INCLUDE_DIR gazebo_generator.h PATHS ${CMAKE_CURRENT_SOURCE_DIR}/thirdParty/octomap_to_gazebo_world/c++/include NO_DEFAULT_PATHS   )
+find_library( gazeboGen_LIBRARY libgazeboGen.a ${CMAKE_CURRENT_SOURCE_DIR}/thirdParty/octomap_to_gazebo_world/c++/lib )
 
 if( (NOT gazeboGen_INCLUDE_DIR) OR (NOT EXISTS ${gazeboGen_INCLUDE_DIR}))
         # we couldn't find the header files for FOO or they don't exist
@@ -27,32 +26,14 @@ if( (NOT gazeboGen_INCLUDE_DIR) OR (NOT EXISTS ${gazeboGen_INCLUDE_DIR}))
         # now we need to clone this submodule
         execute_process(COMMAND git submodule update --init -- thirdParty/octomap_to_gazebo_world
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-
-        # set FOO_INCLUDE_DIR properly
-        set(gazeboGen_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdParty/octomap_to_gazebo_world/c++
-            CACHE PATH "gazeboGen include directory")
-        message( ${CMAKE_CURRENT_SOURCE_DIR}/thirdParty/octomap_to_gazebo_world/c++ )
-        message( ${gazeboGen_INCLUDE_DIR} )
-
-        # also install it
-        install(DIRECTORY ${gazeboGen_INCLUDE_DIR}/gazeboGen DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/thirdParty/lib )
-
-        # for convenience setup a target
-        add_library(gazeboGen INTERFACE)
-        target_include_directories(gazeboGen INTERFACE
-            $<BUILD_INTERFACE:${gazeboGen_INCLUDE_DIR}>
-            $<INSTALL_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdParty/lib>
-        )
-
-        # need to export target as well
-        install(TARGETS gazeboGen EXPORT my_export_set DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/thirdParty/lib)
-else()
-        # see above, setup target as well
-        add_library(gazeboGen INTERFACE)
-        target_include_directories(gazeboGen INTERFACE ${gazeboGen_INCLUDE_DIR})
-        target_link_libraries(gazeboGen INTERFACE ${gazeboGen_LIBRARY})
 endif()
 
+add_subdirectory(thirdParty/octomap_to_gazebo_world/c++)
+
+# see above, setup target as well
+# add_library(gazeboGen INTERFACE)
+target_include_directories(gazeboGen INTERFACE ${gazeboGen_INCLUDE_DIR})
+target_link_libraries(gazeboGen INTERFACE ${gazeboGen_LIBRARY})
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -140,12 +121,12 @@ endif()
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-#catkin_package(
+catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES gazebo_gen
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
-#)
+)
 
 ###########
 ## Build ##
@@ -155,7 +136,8 @@ endif()
 ## Your package locations should be listed before other locations
 include_directories(
 # include
-# ${catkin_INCLUDE_DIRS}
+ ${catkin_INCLUDE_DIRS}
+ ${gazeboGen_INCLUDE_DIR}
 )
 
 ## Declare a C++ library
@@ -171,7 +153,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/gazebo_gen_node.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -184,9 +166,10 @@ include_directories(
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
+ target_link_libraries(${PROJECT_NAME}
+   ${catkin_LIBRARIES}
+         ${gazeboGen_LIBRARY}
+ )
 
 #############
 ## Install ##
@@ -203,11 +186,11 @@ include_directories(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/

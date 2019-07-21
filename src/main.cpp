@@ -5,10 +5,12 @@
 #include <iostream>
 #include <ros/ros.h>
 #include <string>
-#include <VisibilityPolygon.h>
+#include <vector>
 
 #include "gazebo_generator.h"
 
+using namespace std;
+namespace gg = gazebo_generator;
 
 int
 main( int argc, char** argv ) {
@@ -24,11 +26,14 @@ main( int argc, char** argv ) {
     string contourFileName;
     n.getParam( "contour_file", contourFileName );
 
-    GazeboGen::World world( gazeboFileName, contourFileName );
+    gg::GazeboGenerator generator( "test.world", contourFileName, 2000, 2000, 25, 5 );
 
-    vector<V::Polygon> obs;
-    V::Polygon p {{ V::Point( 100, 100 ), V::Point( 200, 100 ),V::Point( 200, 200 ),V::Point( 100, 200 ), V::Point( 100, 100 ) } };
-    obs.emplace_back( p );
-    world.write( obs, 2000, 2000 );
+    vector<gg::Polygon> obs;
+    gg::Polygon p { {{ 100, 100 }, { 200, 100 }},
+                    {{ 200, 100 }, { 200, 200 }},
+                    {{ 200, 200 }, { 100, 200 }},
+                    {{ 100, 200 }, { 100, 100 }} };
+    generator.addPolygon( p );
+    generator.write();
 }
 
