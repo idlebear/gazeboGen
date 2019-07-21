@@ -1,5 +1,5 @@
 # GazeboGen
-## A simple test package for experimenting with ROS builds, Cmake, submodules, and generating GazeboWorlds
+## A simple test package for experimenting with ROS builds, CMake, submodules, and generating GazeboWorlds
 
 A small project intended to test the generator library found in:
 
